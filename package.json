@@ -1,0 +1,11 @@
+{
+  "name": "videosharingplatform",
+  "version": "1.0.0",
+  "description": "backend for a video sharing platform",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Aman Khowal",
+  "license": "ISC"
+}

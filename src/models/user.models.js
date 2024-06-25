@@ -52,7 +52,7 @@ const userSchema = new Schema(
 
 
 userSchema.pre("save", async function(next){  // event is 'save' -> middleware that runs on some event in this case 'save' -> before data is saved. The Next is important in middlewares to pass control/flag to the next middleware.
-    if (!this.isModified("password")) return next();   // if condition checks if the password is modified or created, if not, it returns next. and if yes it continues hashing the password. this check is important because whenever a user changes their profile and clicks on save button, it will hash the password everytime.
+    if (!this.isModified("password")) return next();   // this condition checks if the password is modified or created, if not, it returns next. and if yes it continues hashing the password. this check is important because whenever a user changes their profile and clicks on save button, it will hash the password.
     this.password = await bcrypt.hash(this.password, 10); // which is to be encrypted and how many rounds
     // We cannot use aero function as an argument here because aero functions do not have context or 'this' reference, that's why we have used a normal function.
     next();
@@ -97,7 +97,7 @@ export const User = mongoose.model("User",userSchema); // it gives you a model (
 
 /*
 
-Pre middleware functions are executed one after another, when each mkddleware calles next.
+Pre middleware functions are executed one after another, when each middleware calls next.
 They are used to execute some code just before the next middleware is called or data is saved.
 In our case, we want to use Pre middleware just before saving some data, we want this to encrypt password a user has entered before it is saved.
 
@@ -111,20 +111,20 @@ This is no problem for calculating a single hash for a login, but it is a huge p
 
 
 Why Compare Passwords?
-User Authentication:
 
+User Authentication:
 - When a user attempts to log in, they provide their plaintext password along with their username or email.
 To verify the user's identity, the application needs to check if the provided password matches the one stored in the database.
-Security:
 
+Security:
 - Passwords are stored in the database in a hashed form (not as plaintext) for security reasons. Hashing is a one-way function that converts the plaintext password into a fixed-length string.
 When a user logs in, the application cannot compare the provided password directly with the hashed password in the database because they are not in the same form.
 Instead, the application hashes the provided password and then compares the plaintext password provided by the user with the hashed password stored in the database using a function like bcrypt.compare.
 returns true if the provided password matches the hashed password in the database, and false otherwise.
 
 
-# `.methods` is a property (object) of Mongoose schemas that allows you to define instance methods for your Mongoose models in this object(.methods) as its property. These instance methods can be called on instances of the model.
-The code defines an instance method named isPasswordCorrect on the userSchema. This method can then be called on any instance (individual object created from the User model) to check if the provided password is correct.
+# `.methods` is a property (object) of Mongoose schemas that allows you to define instance methods for your Mongoose models in itself(.methods) as its properties. These instance methods can be called on instances of the model.
+The code defines an instance method named isPasswordCorrect on the userSchema. This method (member function of the model 'User') can then be called on any instance (individual object created from the 'User' model) to check if the provided password is correct.
 
 # Example code:
 const user = new User({
@@ -150,7 +150,7 @@ in the same way we have made generateAccessToken, generateRefreshToken in the Us
 
 
 # Usage of the Access Token
-Once the generateAccessToken method is called and a token is generated typically created when a user successfully authenticates with your application:
+Once the generateAccessToken method is called, a token is generated typically created when a user successfully authenticates with your application:
 
 
 1) User Authentication: A user submits their credentials (such as username/email and password) to your application's authentication endpoint.
@@ -161,7 +161,7 @@ Once the generateAccessToken method is called and a token is generated typically
   This token is a JWT containing information about the user (such as _id, email, username, fullName).
 
 4) Sending to Client: The generated token is then sent back to the client (e.g., frontend application) in the HTTP response body or headers after successful authentication.
-  This can be done as a JSON response body, an HTTP header (commonly Authorization header with value Bearer <token>), or in some cases,
+  This can be done as a JSON response body, an HTTP header (commonly Authorization header with value 'Bearer <token>'), or in some cases,
   as a cookie (typically an HTTP-only cookie for security reasons).
 
 5) Client Storage: The client (e.g., a web browser for a web application) then stores this token securely.

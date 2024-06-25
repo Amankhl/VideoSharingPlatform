@@ -18,7 +18,36 @@ app.use(express.static("public")) // if some files like pdf, images, favicon are
 app.use(cookieParser()) // to perform crud operations on cookies of users on users' browser
 
 
+
+
+
+
+// Routes import
+import userRouter from "./routes/user.routes.js"   // we can use any name as long as they are 'export default'
+
+
+// Routes declaration
+app.use("/api/v1/users", userRouter)    // we usually use .get('/route', (req, res) => {}) (route + controller) together, but here we seperated route and controller
+
+// http://localhost:3000/api/v1/users/register  OR for example http://localhost:3000/api/v1/users/login
+// if a user comes to this url, they will be redirected to userRouter (user.routes.js) and userRouter will handle the request by calling the controller registerUser (user.controller.js)
+
 export { app }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

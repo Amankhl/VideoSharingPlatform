@@ -12,3 +12,6 @@ Models - writing schemas
        - jwt tokens + adding tokens in env 
 
 file upload using multer, cloudinary - utils - cloudinary.js
+
+routes and controller:
+registration (controller)

@@ -1,3 +1,4 @@
+// using this class we can handle errors in controllers easily
 class ApiError extends Error {
     constructor(statusCode, message="Something went wrong", errors=[], stack=""){
         super(message);  //Error constructor - Error(message)

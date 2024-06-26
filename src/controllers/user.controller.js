@@ -34,7 +34,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // 1)
    const { username, email, password, fullName } = req.body
-   console.log("email: ", email)
+//    console.log("email: ", email)
+//    console.log(req.body);
 
 // 2)
    /*
@@ -52,7 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
     ){
         throw new ApiError(400, "All fields are required")
     }
-    if (email.includes("@") === false) {
+    if (!email || !email.includes("@")) {
         throw new ApiError(400, "Invalid email")
     }
 
@@ -67,18 +68,26 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // 4)
     // multer provides '.files' property created by the 'upload' middleware in the request object. this is similar to how express provides '.body'
+    // console.log("req.files: ", req.files);
     const avatarLocalPath = req.files?.avatar[0]?.path; // this path is created by multer defined in the middleware
-    const coverLocalPath = req.files?.coverImage[0]?.path;
-    if(! avatarLocalPath){
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;  // this code throws error if a user uploads no cover image
+
+    // if user doesn't upload any cover image, then we need to set it to an empty string
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
+
+    if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file is required")
     }
 
 // 5)
     const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverLocalPath)
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     // as avatar is required field in database. so we need to double check if it exists or not in db
-    if(! avatar){
+    if(!avatar){
         throw new ApiError(400, "Avatar file is required")  
     }
 
@@ -91,6 +100,7 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         username: username.toLowerCase()
     })
+
 // 7, 8)
     const createdUser = await User.findById(user._id).select("-password -refreshToken")// this removes password and refresh token from the response of entry creation. select() parameter takes a string that specifies the fields to be removed using '-' prepended to the field name
     // _id is automatically generated after the user is created

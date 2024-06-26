@@ -1,7 +1,8 @@
 import multer from "multer";
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {  // user's request, file being uploaded,  cb = callback
+    destination: function (req, file, cb)  // user's request, file being uploaded,  cb = callback
+    {
         cb(null, "./public/temp")
     },
     filename: function (req, file, cb) {

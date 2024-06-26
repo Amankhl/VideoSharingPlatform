@@ -4,7 +4,7 @@ import connectDB from "./db/index.js";
 import { app } from "./app.js";
 
 dotenv.config({
-    path: './env'
+    path: './.env'
 })
 
 // whenever a async method is completed, it returns a promise. So our connectDB function was an async function that's why we can use .then().catch to handle the promise

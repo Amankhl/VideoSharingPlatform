@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginUser, logoutUser, registerUser } from "../controllers/user.controller.js";
+import { loginUser, logoutUser, refreshAccessToken, registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middlerware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -15,9 +15,13 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser)
 
-// secured routes
+// secured routes (only logged in users can access these routes):
+
 router.route("/logout").post(verifyJWT, logoutUser)   // that's why we used next() in verifyJWT so that after running this function, logoutUser will also be called. in verifyJWT we've added a new object in the req object (req.user). and we know that any changes made in the middleware will remain for next middleware and route handler, so that means we have added user object in the req, and this will be passed to logoutUser (can be accessed as req.user).
 //logout can also be handled with get method then you would need to use get method in your frontend as well.
+
+router.route("/refresh-token").post(refreshAccessToken)
+
 export default router
 
 

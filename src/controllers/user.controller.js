@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 /*
 const registerUser = asyncHandler(async (req, res) => {
@@ -33,7 +34,7 @@ const generateAccessAndRefreshTokens = async(userId) => {
 
 
 
-// Main Function
+// Main Function (Controllers)
 
 const registerUser = asyncHandler(async (req, res) => {
    /*
@@ -218,7 +219,50 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 });
 
-export { registerUser, loginUser, logoutUser };
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+    if(!incomingRefreshToken){
+        throw new ApiError(401, "Unauthorized request");
+    }
+
+    try {
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)     // the decoded token contains header, payload (data), and signature. and in Models we defined refreshTokens and it only had `_id` field
+    
+        const user = await User.findById(decodedToken?._id); // this user object has all the fields defined in `User` model, also the refreshToken
+    
+        if(!user){
+            throw new ApiError(401, "Invalid refresh token");
+        }
+    
+        // now matching the incoming refresh token with the one in the database.
+        if(incomingRefreshToken !== user?.refreshToken){
+            throw new ApiError(401, "Refresh token is expired or used");
+        }// if besides access token, refresh token has also expired
+    
+        const options = {
+            httpOnly: true,
+            secure: true,
+        }
+    
+        // if refresh token in the request and in the database are matched, we generate new access token as the previous access token is expired, but we know that the refresh token is still valid, we also generate new refresh token as well so that it has new time span.
+        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+    
+        return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", newRefreshToken, options)
+        .json(new ApiResponse(
+            200,
+            { accessToken, refreshToken: newRefreshToken },
+            "Access token refreshed successfully"
+        ))
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token");
+    }
+
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
 
 
 
@@ -247,6 +291,17 @@ collection that matches the specified query criteria. It is particularly useful 
 $or: This is a MongoDB query operator used within the query object. It allows you to specify that at least one of the expressions in the array must be true. 
 In this case, it means the query will match documents where either the username or the email field matches the provided values. we pass objects in the array [{username},{email}]
 
+
+
+
+
+The purpose of refresh token is to refresh the accessToken (since accessToken is short lived and are not stored in db) when a user's accessToken expires and the user doesn't need to login again for a while.
+refresh tokens are also called session storage, they are long lived. they are stored in the database.
+
+suppose we have a user. now his access token is invalid/expired, the user will get a 401 request that says "your access has expired". So In frontend we can write some code that if the user's access has expired, hit an endpoint where we can refresh the access token, we will get a new token. 
+how will we get a new token? we send the request with the refresh token using that we verify by matching it with the one in the database. if they are the same, we start a new session. it's like logining in again. we get a new access and refresh token.
+
+in frontend where we send a req to generate a new tokens, we need an endpoint for that, where they hit that api and send the old refresh token and get new access and refresh tokens.
 
 
 */

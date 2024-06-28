@@ -18,12 +18,12 @@ const uploadOnCloudinary = async (localFilePath) => {
         const uploadResult = await cloudinary.uploader.upload(localFilePath, {resource_type: "auto"})
         // file is uploaded
         // console.log("File uploaded successfully: ", uploadResult.url)
-        fs.unlinkSync(localFilePath)
+        fs.unlinkSync(localFilePath)    //remove the locally saved temporary file
         return uploadResult 
     } catch (error) {
         fs.unlinkSync(localFilePath) //remove the locally saved temporary file as the upload operation got failed
         return null;
-    }// In file system, when we delete a file, it is unlinked from the file system. That's how OS handles it. we use 'unlink' to delete a file rather then 'delete' itself.
+    }// In file system, when we delete a file, it is unlinked from the file system. That's how OS handles it. we use 'unlink' to delete a file rather than using 'delete' itself.
 }
 
 export { uploadOnCloudinary }

@@ -15,3 +15,4 @@ file upload using multer, cloudinary - utils - cloudinary.js
 
 routes and controller:
 registration (controller)
+login & logout

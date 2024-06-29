@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 
-// used in logout, authentication as a middleware
+// used in logout, password change, details updation, files updation, authentication as a middleware
 
 // when a user logged in, we sent accessToken and refreshToken in the response. and using them we verify and if the user has both, we add a new object in the req object (req.user) like how cookie-parser gives access to cookie and multer adds its file(s) object and send it to the route handler.
 

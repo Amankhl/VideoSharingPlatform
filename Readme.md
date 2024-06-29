@@ -15,4 +15,12 @@ file upload using multer, cloudinary - utils - cloudinary.js
 
 routes and controller:
 registration (controller)
-login & logout
+login (+ auth middleware) & logout
+refreshAccessToken (when a user's access token has expired)
+change password
+update details
+update avatar
+update coverImage
+currentUser
+
+subscription model

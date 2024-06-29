@@ -22,7 +22,7 @@ const generateAccessAndRefreshTokens = async(userId) => {
         const refreshToken = await user.generateRefreshToken(); //RefreshToken are long lived
 
         user.refreshToken = refreshToken;   // as user is an object document and it already has a field called 'refreshToken' and we can set its value
-        await user.save({ validateBeforeSave: false });   // now after adding the value, we save it in the db using save() from mongoose. we also use {validateBeforeSave: false} to avoid any validation errors as password field has validation and everytime we add something and save the user, password has to be filled. here we are not creating a new user, we are just updating the db, so we have to set validation of password to false as we don't need validation here.
+        await user.save({ validateBeforeSave: false });   // now after adding the value, we save it in the db using save() from mongoose. we also use {validateBeforeSave: false} to avoid any validation errors as password, username, email fields have validations and everytime we add something and save the user, password and other fields have to be filled. here we are not creating a new user, we are just updating the db, so we have to set validation of password to false as we don't need validation here.
 
         return { accessToken, refreshToken }; 
 
@@ -146,7 +146,7 @@ const loginUser = asyncHandler(async (req, res) => {
     */
 
 //1)
-    const { username, email, password } = req.body;
+    const { username, email, password } = req.body;    // username or email will be entered and the field which is not entered will be null
 
 //2)
     if(!(username || email)){   // you can also check one by one or you can use '&&' operator to check both (!username && !email)
@@ -262,7 +262,126 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 })
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body;                // confirm password checking can be done at the frontend
+    // we need to confirm the new password, we will take confPassword field as well and use if condition to check if the new password and confirm password are same if not we will throw error.
+
+    const user = await User.findById(req.user?._id);    // we have used verifyJWT middleware in routes, so we can use req.user
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);        // checking if the old password the user has entered is correct or not by matching with the one in the database
+
+    if(!isPasswordCorrect){
+        throw new ApiError(400, "Old password is incorrect");
+    }
+
+    user.password = newPassword;
+    await user.save({validateBeforeSave: false});       // as other fields have validation (required: true) so we have to set validateBeforeSave: false to avoid validation errors
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Password changed successfully")
+    );
+})
+
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res.status(200).json(200, req.user, "Current user fetched successfully");
+})
+
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body;    // if you want to update files (avatar or profile image and cover image), it is better to use a different route(endpoint) and controller. we can give a save buttton beside the profile photo and cover photo in the frontend and when a user clicks on it, we will hit that endpoint and save that files. that's how production level app works. otherwise if you used one single route for updating everything and you just change files with that, it will re-send text data.
+    if(!fullName || !email){
+        throw new ApiError(400, "Please provide full name and email");
+    }
+    
+    const user = await User.findByIdAndUpdate(
+        req.user?._id, 
+        {
+            $set: {                   // $set is a MongoDB operator used to update a document in a MongoDB collection. It is used to update the fields of a document in a MongoDB collection.
+                fullName: fullName,
+                email: email
+            }
+        }, 
+        {new: true}      // this is for returning the updated document
+    ).select("-password");   // directly returning the updated document without the password so that we don't need to call 'User' model again and can save database calls.
+    
+    return res.status(200).json(
+        new ApiResponse(200, user, "Account details updated successfully"));
+})
+
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path;      // here we are just taking one file that's why we used 'file' not 'files'. we will have one endpoint for each file a user can update and clicks the save button for.
+
+    if(!avatarLocalPath){
+        throw new ApiError(400, "Please provide an avatar");
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)     // if you don't want to save images on cloudnary, you can directly save the images on the database. just change the config of the unlinking of files for the public folder.
+
+    if(!avatar.url){
+        throw new ApiError(500, "Error while uploading the avatar");
+    }
+
+    const user = await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $set: {
+                    avatar: avatar.url      // we save url so that it can be used in frontend to render the image
+                }    // you only want to update the avatar not the whole document that's why we use $set. we are doing patch request.
+            },
+            {new: true}
+    ).select("-password");
+
+    return res.status(200).json(
+        new ApiResponse(200, user, "Avatar updated successfully")
+    )
+
+})
+
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+    const coverImageLocalPath = req.file?.path;      // here we are just taking one file that's why we used 'file' not 'files'. we will have one endpoint for each file a user can update and clicks the save button for.
+
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Please provide an Cover Image");
+    }
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)     // if you don't want to save images on cloudnary, you can directly save the images on the database. just change the config of the unlinking of files for the public folder.
+
+    if (!coverImage.url) {
+        throw new ApiError(500, "Error while uploading the Cover Image");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                coverImage: coverImage.url      // we save url so that it can be used in frontend to render the image
+            }    // you only want to update the avatar not the whole document that's why we use $set. we are doing patch request.
+        },
+        { new: true }
+    ).select("-password");
+
+    return res.status(200).json(
+        new ApiResponse(200, user, "Cover image updated successfully")
+    )
+
+})
+
+
+export { 
+    registerUser, 
+    loginUser, 
+    logoutUser, 
+    refreshAccessToken, 
+    changeCurrentPassword, 
+    getCurrentUser, 
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage
+};
 
 
 

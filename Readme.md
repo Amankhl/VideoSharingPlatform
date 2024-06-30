@@ -19,8 +19,8 @@ login (+ auth middleware) & logout
 refreshAccessToken (when a user's access token has expired)
 change password
 update details
-update avatar
-update coverImage
+update avatar + also delete the old image
+update coverImage + also delete the old image
 currentUser
 
 subscription model

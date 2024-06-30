@@ -4,6 +4,7 @@ import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
 
 /*
 const registerUser = asyncHandler(async (req, res) => {
@@ -285,7 +286,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    return res.status(200).json(200, req.user, "Current user fetched successfully");
+    return res.status(200).json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 })
 
 
@@ -318,26 +319,55 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Please provide an avatar");
     }
 
+    // Upload new avatar to Cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath)     // if you don't want to save images on cloudnary, you can directly save the images on the database. just change the config of the unlinking of files for the public folder.
 
     if(!avatar.url){
         throw new ApiError(500, "Error while uploading the avatar");
     }
 
-    const user = await User.findByIdAndUpdate(
-            req.user._id,
-            {
-                $set: {
-                    avatar: avatar.url      // we save url so that it can be used in frontend to render the image
-                }    // you only want to update the avatar not the whole document that's why we use $set. we are doing patch request.
-            },
-            {new: true}
-    ).select("-password");
+    // Retrieve the existing user data
+    const user = await User.findById(req.user._id).select("-password -refreshToken");   //although we do not need to use select here as we are not sending 'user' data as a response, we are just for security purpose. 
 
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const oldAvatarUrl = user.avatar;
+
+    // Update the user's avatar URL in the database
+    user.avatar = avatar.url;
+    await user.save({ validateBeforeSave: false });
+
+    // Delete the old avatar from Cloudinary
+    if (oldAvatarUrl) {
+        // Extract the publicId from the old avatar URL. usually it is the last part of the URL after the last '/' and before .png (basically the name of the image)
+        const publicId = oldAvatarUrl.split('/').pop().split('.')[0];
+        await deleteFromCloudinary(publicId);
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Avatar updated successfully")
+    )
+
+
+    /*
+    // this is for updating the database. we created this just to update database, but we didn't delete the old image from cloudinary after uploading a new one. That's why we are not using it to save database calls. we will only use findById. 
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                avatar: avatar.url      // we save url so that it can be used in frontend to render the image
+            }    // you only want to update the avatar not the whole document that's why we use $set. we are doing patch request.
+        },
+        {new: true}
+    ).select("-password");
+    
     return res.status(200).json(
         new ApiResponse(200, user, "Avatar updated successfully")
     )
-
+    */
+    
 })
 
 
@@ -348,25 +378,54 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Please provide an Cover Image");
     }
 
+    // Upload new cover image to Cloudinary
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)     // if you don't want to save images on cloudnary, you can directly save the images on the database. just change the config of the unlinking of files for the public folder.
 
     if (!coverImage.url) {
         throw new ApiError(500, "Error while uploading the Cover Image");
     }
 
+    // Retrieve the existing user data
+    const user = await User.findById(req.user._id).select("-password -refreshToken");   //although we do not need to use select here as we are not sending 'user' data as a response, we are just for security purpose. 
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const oldCoverImageUrl = user.coverImage;
+
+    // Update the user's cover image URL in the database
+    user.coverImage = coverImage.url;
+    await user.save({ validateBeforeSave: false });
+    
+    // Delete the old cover image from Cloudinary
+    if (oldCoverImageUrl) {
+        // Extract the publicId from the old cover image URL. usually it is the last part of the URL after the last '/' and before .png (basically the name of the image)
+        const publicId = oldCoverImageUrl.split('/').pop().split('.')[0];
+        await deleteFromCloudinary(publicId);
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Cover image updated successfully")
+    )
+
+
+    /*
+    // this is for updating the database. we created this just to update database, but we didn't delete the old image from cloudinary after uploading a new one. That's why we are not using it to save database calls. we will only use findById. 
     const user = await User.findByIdAndUpdate(
         req.user._id,
         {
             $set: {
                 coverImage: coverImage.url      // we save url so that it can be used in frontend to render the image
-            }    // you only want to update the avatar not the whole document that's why we use $set. we are doing patch request.
+            }    // you only want to update the coverImage not the whole document that's why we use $set. we are doing patch request.
         },
         { new: true }
     ).select("-password");
-
+    
     return res.status(200).json(
         new ApiResponse(200, user, "Cover image updated successfully")
     )
+    */
 
 })
 

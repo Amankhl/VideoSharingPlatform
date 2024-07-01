@@ -385,6 +385,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error while uploading the Cover Image");
     }
 
+    //new code started from here
+
     // Retrieve the existing user data
     const user = await User.findById(req.user._id).select("-password -refreshToken");   //although we do not need to use select here as we are not sending 'user' data as a response, we are just for security purpose. 
 
@@ -408,6 +410,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, {}, "Cover image updated successfully")
     )
+    
+    //new code ended here
 
 
     /*

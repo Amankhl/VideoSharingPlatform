@@ -12,8 +12,8 @@ app.use(cors({
     credentials: true
 }))
 
-app.use(express.json({limit:"16kb"})) // another middleware to handle the json limit
-app.use(express.urlencoded({extended: true, limit:"16kb"}))  // extended for allowing objects in objects
+app.use(express.json({ limit: "16kb" })) // When clients send raw JSON data in the body of an HTTP request, `express.json()` parses the JSON string (incoming requests with JSON payloads) and converts it into a JavaScript object. This parsed object is then attached to the req.body property, making it easily accessible in route handlers. we can also handle the json limit
+app.use(express.urlencoded({ extended: true, limit: "16kb" }))  // When a form is submitted with the application/x-www-form-urlencoded encoding type (typically sent by HTML forms), the form data is encoded as a query string (name=John%20Doe&age=30). Now the express.urlencoded() middleware parses this URL-encoded string data into a usable JavaScript object on the server side and makes it accessible via req.body in your route handlers (req,res). `extended: true` for allowing objects in objects.
 app.use(express.static("public")) // if some files like pdf, images, favicon are upload, we store them in public folder
 app.use(cookieParser()) // to perform crud operations on cookies of users on users' browser
 

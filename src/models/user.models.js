@@ -55,7 +55,7 @@ userSchema.pre("save", async function(next){  // event is 'save' -> middleware t
     if (!this.isModified("password")) return next();   // this condition checks if the password is modified or created, if not, it returns next. and if yes it continues hashing the password. this check is important because whenever a user changes their profile and clicks on save button, it will hash the password.
     this.password = await bcrypt.hash(this.password, 10); // which is to be encrypted and how many rounds
     // We cannot use aero function as an argument here because aero functions do not have context or 'this' reference, that's why we have used a normal function.
-    next();
+    next();  //Mongoose uses next() to manage the flow of execution. Without calling next(), Mongoose wouldn't know that it should proceed with the save, create, or update operation or calling other middlewares.
 })
 
 userSchema.methods.isPasswordCorrect = async function(password){

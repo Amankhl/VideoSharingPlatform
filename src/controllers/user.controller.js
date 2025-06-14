@@ -68,7 +68,7 @@ const registerUser = asyncHandler(async (req, res) => {
     OR
    */
     if(
-        [fullName, username, email, password].some(field => field?.trim() === "")    // checks on a condition and returns true or false. 
+        [fullName, username, email, password].some(field => field?.trim() === "")    // If any of the fields is empty or consists only of whitespace, which is removed by the trim() method from both ends of each string (field), the condition evaluates to true. some function is like map() but some() returns true or false unlike map() which returns a new array with transformed elements
     ){
         throw new ApiError(400, "All fields are required")
     }
@@ -111,7 +111,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
 // 6)
-    const user = await User.create({
+    const user = await User.create({               // you don't need to use save() in order to save the changes. these methods (findByIdAndUpdate or any other method provided by mongoose for creating, updating or deleting) automatically save the changes
         fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",  // if coverImage is not provided, it will be an empty string. since we didn't check for it in db, we need to do it here otherwise database will break.
